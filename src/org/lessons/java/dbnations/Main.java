@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
@@ -42,9 +43,18 @@ public class Main {
 			}
 
 			System.out.println();
-			System.out.print("Insert the id of a country: ");
-			int id = s.nextInt();
-			s.nextLine();
+			int id = 0;
+			while (true) {
+				try {
+					System.out.print("Insert the id of a country: ");
+					id = s.nextInt();
+					s.nextLine();
+					break;
+				} catch (InputMismatchException ex) {
+					System.out.println("Invalid input. Please enter a valid id.");
+					s.nextLine();
+				}
+			}
 
 			try (Connection con = DriverManager.getConnection(url, user, password)) {
 				// -- Query per recuperare le lingue parlate in una nazione
