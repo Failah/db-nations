@@ -17,6 +17,7 @@ public class Main {
 
 		while (!repeat) {
 			System.out.print("Insert a search word: ");
+			System.out.println();
 			String search = s.nextLine();
 
 			try (Connection con = DriverManager.getConnection(url, user, password)) {
@@ -41,10 +42,62 @@ public class Main {
 			}
 
 			System.out.println();
-			System.out.println(
-					"*******************************************************************************************************************************************************");
-			System.out.println();
+			System.out.print("Insert the id of a country: ");
+			int id = s.nextInt();
+			s.nextLine();
 
+			try (Connection con = DriverManager.getConnection(url, user, password)) {
+				// -- Query per recuperare le lingue parlate in una nazione
+				// select l.language , c.name as country
+				// from countries c
+				// inner join country_languages cl
+				// on c.country_id = cl.country_id
+				// inner join languages l
+				// on cl.language_id = l.language_id
+				// where cl.country_id = ?;
+				String sqlLanguages = "select l.language , c.name as country " + "from countries c "
+						+ "inner join country_languages cl " + "on c.country_id = cl.country_id "
+						+ "inner join languages l " + "on cl.language_id = l.language_id " + "where cl.country_id = ?";
+
+				try (PreparedStatement psLanguages = con.prepareStatement(sqlLanguages)) {
+					psLanguages.setInt(1, id);
+					try (ResultSet rsLanguages = psLanguages.executeQuery()) {
+						System.out.println();
+						System.out.println("Languages spoken in the country with id " + id + ":");
+						while (rsLanguages.next()) {
+							System.out.println(rsLanguages.getString("language"));
+						}
+					}
+				}
+
+				// Query per recuperare le statistiche più recenti per una country
+				// select cs.country_id , cs.year , cs.population , cs.gdp
+				// from country_stats cs
+				// where cs.country_id = ?
+				// order by cs.year desc
+				// limit 1;
+				String sqlStatistics = "select cs.country_id , cs.year , cs.population , cs.gdp "
+						+ "from country_stats cs " + "where cs.country_id = ? " + "order by cs.year desc " + "limit 1";
+
+				try (PreparedStatement psStatistics = con.prepareStatement(sqlStatistics)) {
+					psStatistics.setInt(1, id);
+					try (ResultSet rsStatistics = psStatistics.executeQuery()) {
+						if (rsStatistics.next()) {
+							System.out.println();
+							System.out.println("Latest statistics for the country with id " + id + ":");
+							System.out.println("Year: " + rsStatistics.getInt("year"));
+							System.out.println("Population: " + rsStatistics.getInt("population"));
+							System.out.println("Gdp: " + rsStatistics.getBigDecimal("gdp"));
+						} else {
+							System.out.println("No statistics found for the country with id " + id);
+						}
+					}
+				}
+			} catch (SQLException ex) {
+				ex.printStackTrace();
+			}
+
+			System.out.println();
 			while (true) {
 				System.out.print("Would you like to do another research? (y/n): ");
 				try {
@@ -52,6 +105,7 @@ public class Main {
 					if (choice.equalsIgnoreCase("y")) {
 						break;
 					} else if (choice.equalsIgnoreCase("n")) {
+						System.out.println();
 						System.out.println("Program closed.");
 						repeat = true;
 						break;
